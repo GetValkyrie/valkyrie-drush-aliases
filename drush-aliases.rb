@@ -26,6 +26,8 @@ module VagrantPlugins
             ensure_drushrc_included
             ensure_project_alias_path_included
           end
+          # Proceed with the rest of the middleware stack
+          @app.call(env)
         end
 
         def ensure_drushrc_exists
