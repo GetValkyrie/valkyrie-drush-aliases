@@ -99,6 +99,9 @@ module VagrantPlugins
         def call(env)
           if [:destroy, :suspend, :halt].include?(env[:machine_action])
             ensure_project_alias_path_removed
+            if env[:machine_action] == :destroy
+              delete_project_alias_path
+            end
           end
         end
 
@@ -112,6 +115,12 @@ module VagrantPlugins
             tmp.close
             FileUtils.mv(tmp.path, @drushrc_include_path)
           end
+        end
+
+        def delete_project_alias_path
+          @ui.detail "Deleting project alias path (#{@project_alias_path})."
+          require 'fileutils'
+          FileUtils.rm(@project_alias_path)
         end
 
       end
