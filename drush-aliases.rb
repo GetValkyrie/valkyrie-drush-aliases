@@ -121,7 +121,7 @@ module VagrantPlugins
           if File.exists?(@project_alias_path)
             @ui.detail "Deleting project alias path (#{@project_alias_path})."
             require 'fileutils'
-            FileUtils.rm(@project_alias_path)
+            FileUtils.rm_r(@project_alias_path)
           end
         end
 
