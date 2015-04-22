@@ -10,6 +10,7 @@ module VagrantPlugins
           @machine = env[:machine]
           @ui = env[:ui]
           @logger = Log4r::Logger.new("ValkyrieMount::action::ValkyrieMount")
+          @valkyrie_vms = ENV.fetch('VALKYRIE_VMS', 'valkyrie').split(',')
           @project_path = ENV.fetch('VALKYRIE_PROJECT_PATH', File.dirname(File.expand_path(__FILE__)))
           @project_alias_path = ENV.fetch('VALKYRIE_PROJECT_ALIAS_PATH', @project_path+'/.valkyrie/cache/aliases')
           @project_alias_include_line = "$options['alias-path'][] = '#{@project_alias_path}';"
@@ -19,12 +20,14 @@ module VagrantPlugins
         end
 
         def call(env)
-          if [:up, :resume, :reload].include?(env[:machine_action])
-            @ui.info 'Checking Drush alias integration.'
-            ensure_drushrc_exists
-            ensure_drushrc_include_exists
-            ensure_drushrc_included
-            ensure_project_alias_path_included
+          if valkyrie_vm?
+            if [:up, :resume, :reload].include?(env[:machine_action])
+              @ui.info 'Checking Drush alias integration.'
+              ensure_drushrc_exists
+              ensure_drushrc_include_exists
+              ensure_drushrc_included
+              ensure_project_alias_path_included
+            end
           end
           # Proceed with the rest of the middleware stack
           @app.call(env)
@@ -92,15 +95,21 @@ module VagrantPlugins
           end
         end
 
+        def valkyrie_vm?
+          @valkyrie_vms.include?(@machine.name.to_s)
+        end
+
       end
 
       class RemoveAliasSearchpath < AddAliasSearchpath
 
         def call(env)
-          if [:destroy, :suspend, :halt].include?(env[:machine_action])
-            ensure_project_alias_path_removed
-            if env[:machine_action] == :destroy
-              delete_project_alias_path
+          if valkyrie_vm?
+            if [:destroy, :suspend, :halt].include?(env[:machine_action])
+              ensure_project_alias_path_removed
+              if env[:machine_action] == :destroy
+                delete_project_alias_path
+              end
             end
           end
         end
